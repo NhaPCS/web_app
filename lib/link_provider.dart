@@ -11,12 +11,13 @@ class LinkProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void getLink() async {
+  Future<String> getLink() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String url = prefs.getString('link');
     if (url != null) {
       currentLink = url;
       notifyListeners();
     }
+    return currentLink;
   }
 }
