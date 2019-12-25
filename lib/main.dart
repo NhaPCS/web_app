@@ -13,7 +13,39 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'LIWITECH',
       theme: ThemeData(primarySwatch: Colors.blue, primaryColor: Colors.blue),
-      home: SettingLinkScreen(),
+      home: SplashScreen(),
+    );
+  }
+}
+
+class SplashScreen extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() {
+    return _SplashState();
+  }
+}
+
+class _SplashState extends State<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(seconds: 3)).then((a) {
+      Navigator.of(context).pop();
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => SettingLinkScreen()));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: Image.asset(
+          'assets/ic_launcher.png',
+          width: MediaQuery.of(context).size.width * 0.2,
+        ),
+      ),
     );
   }
 }
@@ -118,7 +150,8 @@ class _SettingsState extends State<SettingLinkScreen> {
         MaterialPageRoute(
             builder: (_) => MyHomePage(
                   link: _textEditingController.text,
-                )));
+                ),
+            fullscreenDialog: true));
   }
 }
 
@@ -170,6 +203,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             )),
         onWillPop: () async {
+          print("popop");
           bool canGoBack = await flutterWebViewPlugin.canGoBack();
           print("AAAAA $canGoBack");
           if (canGoBack) {
