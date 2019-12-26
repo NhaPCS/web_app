@@ -42,8 +42,7 @@ class _SplashState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Center(
         child: Image.asset(
-          'assets/ic_launcher.png',
-          width: MediaQuery.of(context).size.width * 0.2,
+          'assets/splash.jpg',
         ),
       ),
     );
