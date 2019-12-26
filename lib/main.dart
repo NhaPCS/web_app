@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LIWITECH',
+      title: 'DC Monitoring',
       theme: ThemeData(primarySwatch: Colors.blue, primaryColor: Colors.blue),
       home: SplashScreen(),
     );
@@ -32,9 +32,11 @@ class _SplashState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Future.delayed(Duration(seconds: 3)).then((a) {
-      Navigator.of(context).pop();
-      Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => SettingLinkScreen()));
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (_) => MyHomePage(
+                link:
+                    "http://dc-mon.tcmotor.vn:3000/d/iE4OsafWk/dc-monitoring-copy?orgId=1&refresh=5s&from=1577305401420&to=1577327001420",
+              )));
     });
   }
 
@@ -48,111 +50,6 @@ class _SplashState extends State<SplashScreen> {
         ),
       ),
     );
-  }
-}
-
-class SettingLinkScreen extends StatefulWidget {
-  @override
-  State<StatefulWidget> createState() {
-    return _SettingsState();
-  }
-}
-
-class _SettingsState extends State<SettingLinkScreen> {
-  final TextEditingController _textEditingController = TextEditingController();
-  final flutterWebViewPlugin = FlutterWebviewPlugin();
-  final LinkProvider _linkProvider = LinkProvider();
-
-  @override
-  void initState() {
-    super.initState();
-    check();
-  }
-
-  Future<void> check() async {
-    String link = await _linkProvider.getLink();
-    if (link != null) {
-      _textEditingController.text = link;
-      goWeb();
-    }
-  }
-
-  @override
-  Future<void> didChangeDependencies() async {
-    super.didChangeDependencies();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      child: Scaffold(
-        backgroundColor: Colors.white70,
-        body: Center(
-          child: Card(
-            elevation: 20,
-            color: Colors.white,
-            margin: EdgeInsets.all(20),
-            child: Padding(
-              padding: EdgeInsets.all(30),
-              child: Wrap(
-                spacing: 20,
-                children: <Widget>[
-                  Text(
-                    "Setup Web's url",
-                    style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.bold),
-                  ),
-                  TextField(
-                    controller: _textEditingController,
-                    maxLines: 1,
-                    decoration: InputDecoration(
-                        hintText: "Enter web url...",
-                        suffixIcon: IconButton(
-                            icon: Icon(Icons.cancel),
-                            onPressed: () {
-                              _textEditingController.clear();
-                            })),
-                  ),
-                  ButtonTheme(
-                    minWidth: double.infinity,
-                    child: RaisedButton(
-                        color: Theme.of(context).primaryColor,
-                        onPressed: () async {
-                          goWeb();
-                        },
-                        child: Text(
-                          "OK",
-                          style: TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.bold),
-                        )),
-                  )
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-      onWillPop: () async {
-        return false;
-      },
-    );
-  }
-
-  Future<void> goWeb() async {
-    bool _validURL = _textEditingController != null &&
-        _textEditingController.text.isNotEmpty &&
-        Uri.parse(_textEditingController.text).isAbsolute;
-    if (!_validURL) return;
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('link', _textEditingController.text);
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (_) => MyHomePage(
-                  link: _textEditingController.text,
-                ),
-            fullscreenDialog: true));
   }
 }
 
