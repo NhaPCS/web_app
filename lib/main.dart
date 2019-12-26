@@ -1,10 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_app/link_provider.dart';
 import 'package:web_app/loading_provider.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 void main() => runApp(MyApp());
 
@@ -45,6 +45,7 @@ class _SplashState extends State<SplashScreen> {
       body: Center(
         child: Image.asset(
           'assets/splash.jpg',
+          width: MediaQuery.of(context).size.width * 0.5,
         ),
       ),
     );
@@ -60,7 +61,6 @@ class SettingLinkScreen extends StatefulWidget {
 
 class _SettingsState extends State<SettingLinkScreen> {
   final TextEditingController _textEditingController = TextEditingController();
-  final flutterWebViewPlugin = FlutterWebviewPlugin();
   final LinkProvider _linkProvider = LinkProvider();
 
   @override
@@ -167,19 +167,12 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final flutterWebViewPlugin = FlutterWebviewPlugin();
+  WebViewController _webViewController;
   final LoadingProvider _loadingProvider = LoadingProvider();
 
   @override
   void initState() {
     super.initState();
-    flutterWebViewPlugin.onStateChanged.listen((WebViewStateChanged state) {
-      if (state.type == WebViewState.startLoad)
-        _loadingProvider.updateLoading(true);
-      else if (state.type == WebViewState.finishLoad ||
-          state.type == WebViewState.abortLoad)
-        _loadingProvider.updateLoading(false);
-    });
   }
 
   @override
@@ -193,18 +186,28 @@ class _MyHomePageState extends State<MyHomePage> {
     print("ww");
     return ChangeNotifierProvider(
       create: (_) => _loadingProvider,
-      child: WillPopScope(
-          child: WebviewScaffold(
-            appBar: PreferredSize(
-              child: Container(),
-              preferredSize: Size.fromHeight(0.0),
+      child: Scaffold(
+        appBar: PreferredSize(
+          child: Container(),
+          preferredSize: Size.fromHeight(0.0),
+        ),
+        body: Stack(
+          alignment: Alignment.bottomCenter,
+          children: <Widget>[
+            WebView(
+              initialUrl: widget.link,
+              javascriptMode: JavascriptMode.unrestricted,
+              onWebViewCreated: (controller) {
+                _webViewController = controller;
+              },
+              onPageStarted: (a) {
+                _loadingProvider.updateLoading(true);
+              },
+              onPageFinished: (a) {
+                _loadingProvider.updateLoading(false);
+              },
             ),
-            url: widget.link,
-            withLocalStorage: true,
-            hidden: true,
-            withZoom: true,
-            withJavascript: true,
-            bottomNavigationBar: Consumer<LoadingProvider>(
+            Consumer<LoadingProvider>(
               builder:
                   (BuildContext context, LoadingProvider value, Widget child) {
                 return value.loading
@@ -213,18 +216,29 @@ class _MyHomePageState extends State<MyHomePage> {
                         height: 0,
                       );
               },
-            ),
+            )
+          ],
+        ),
+        floatingActionButton: FloatingActionButton(
+          mini: true,
+          child: Icon(
+            CupertinoIcons.back,
+            color: Colors.white,
           ),
-          onWillPop: () async {
+          onPressed: () async {
             print("popop");
-            bool canGoBack = await flutterWebViewPlugin.canGoBack();
+            bool canGoBack = _webViewController == null
+                ? false
+                : await _webViewController.canGoBack();
             print("AAAAA $canGoBack");
             if (canGoBack) {
-              flutterWebViewPlugin.goBack();
+              _webViewController.goBack();
               return false;
             } else
               return true;
-          }),
+          },
+        ),
+      ),
     );
   }
 }
