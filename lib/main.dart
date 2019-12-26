@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_app/link_provider.dart';
+import 'package:web_app/loading_provider.dart';
 
 void main() => runApp(MyApp());
 
@@ -165,27 +167,34 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  LinkProvider _linkProvider = LinkProvider();
-
   final flutterWebViewPlugin = FlutterWebviewPlugin();
+  final LoadingProvider _loadingProvider = LoadingProvider();
 
   @override
   void initState() {
     super.initState();
+    flutterWebViewPlugin.onStateChanged.listen((WebViewStateChanged state) {
+      if (state.type == WebViewState.startLoad)
+        _loadingProvider.updateLoading(true);
+      else if (state.type == WebViewState.finishLoad ||
+          state.type == WebViewState.abortLoad)
+        _loadingProvider.updateLoading(false);
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _linkProvider.getLink();
 //    Provider.of<LinkProvider>(context).getLink();
   }
 
   @override
   Widget build(BuildContext context) {
     print("ww");
-    return WillPopScope(
-        child: WebviewScaffold(
+    return ChangeNotifierProvider(
+      create: (_) => _loadingProvider,
+      child: WillPopScope(
+          child: WebviewScaffold(
             appBar: PreferredSize(
               child: Container(),
               preferredSize: Size.fromHeight(0.0),
@@ -195,21 +204,27 @@ class _MyHomePageState extends State<MyHomePage> {
             hidden: true,
             withZoom: true,
             withJavascript: true,
-            initialChild: Center(
-              child: Container(
-                alignment: FractionalOffset.center,
-                child: CircularProgressIndicator(),
-              ),
-            )),
-        onWillPop: () async {
-          print("popop");
-          bool canGoBack = await flutterWebViewPlugin.canGoBack();
-          print("AAAAA $canGoBack");
-          if (canGoBack) {
-            flutterWebViewPlugin.goBack();
-            return false;
-          } else
-            return true;
-        });
+            bottomNavigationBar: Consumer<LoadingProvider>(
+              builder:
+                  (BuildContext context, LoadingProvider value, Widget child) {
+                return value.loading
+                    ? LinearProgressIndicator()
+                    : SizedBox(
+                        height: 0,
+                      );
+              },
+            ),
+          ),
+          onWillPop: () async {
+            print("popop");
+            bool canGoBack = await flutterWebViewPlugin.canGoBack();
+            print("AAAAA $canGoBack");
+            if (canGoBack) {
+              flutterWebViewPlugin.goBack();
+              return false;
+            } else
+              return true;
+          }),
+    );
   }
 }
